@@ -1,0 +1,98 @@
+﻿@page "/users"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Repositories
+@using LoanManagementSystem.Interfaces
+
+@inject IUserRepository UserRepository
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Users</h2>
+
+    <button class="btn btn-primary"
+            @onclick='() => NavigationManager.NavigateTo("/users/create")'>
+        Add User
+    </button>
+</div>
+
+@if (users == null)
+{
+    <div class="alert alert-info">
+        Loading users...
+    </div>
+}
+else if (!users.Any())
+{
+    <div class="alert alert-warning">
+        No users found.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-bordered table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>User ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.UserId</td>
+                    <td>@user.Name</td>
+                    <td>@user.Email</td>
+                    <td>@user.Role</td>
+
+                    <td>
+                        <button class="btn btn-warning btn-sm"
+                                @onclick='() => NavigationManager.NavigateTo($"/users/edit/{user.UserId}")'>
+                            Edit
+                        </button>
+                    </td>
+
+                    <td>
+                        <button class="btn btn-danger btn-sm"
+                                @onclick="() => DeleteUser(user.UserId)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code
+{
+    private List<User>? users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserRepository.GetAllUsers();
+    }
+
+    private async Task DeleteUser(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm",
+            "Are you sure you want to delete this user?");
+
+        if (!confirmed)
+            return;
+
+        await UserRepository.DeleteUser(id);
+
+        users = await UserRepository.GetAllUsers();
+    }
+}

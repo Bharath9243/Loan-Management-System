@@ -1,0 +1,145 @@
+﻿@page "/loanapplications/create"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILoanApplicationRepository LoanApplicationRepository
+@inject IUserRepository UserRepository
+@inject NavigationManager NavigationManager
+
+<h2 class="mb-4">New Loan Application</h2>
+
+<EditForm Model="@loanApplication" OnValidSubmit="SaveLoanApplication">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (isAdmin)
+    {
+        <div class="mb-3">
+
+            <label class="form-label">
+                Customer
+            </label>
+
+            <InputSelect class="form-select"
+                         @bind-Value="loanApplication.UserId">
+
+                @foreach (var user in users)
+                {
+                    <option value="@user.UserId">
+                        @user.Name
+                    </option>
+                }
+
+            </InputSelect>
+
+        </div>
+    }
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Application Status
+        </label>
+
+        <InputSelect class="form-select"
+                     @bind-Value="loanApplication.ApplicationStatus">
+
+            <option>Pending</option>
+            <option>Under Review</option>
+            <option>Approved</option>
+            <option>Rejected</option>
+
+        </InputSelect>
+
+    </div>
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            Loan Amount
+        </label>
+
+        <InputNumber class="form-control"
+                     @bind-Value="loanApplication.LoanAmount" />
+
+    </div>
+
+    <button type="submit"
+            class="btn btn-success">
+        Submit Application
+    </button>
+
+    <button type="button"
+            class="btn btn-secondary ms-2"
+            @onclick="Cancel">
+        Cancel
+    </button>
+
+</EditForm>
+
+@code {
+
+    private LoanApplication loanApplication = new();
+
+    private List<User> users = new();
+
+    private bool isAdmin;
+
+    private int currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var user = authState.User;
+
+        isAdmin = user.IsInRole("Admin");
+
+        currentUserId = int.Parse(
+            user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+        loanApplication.ApplicationStatus = "Pending";
+        loanApplication.ApplicationDate = DateTime.Now;
+        loanApplication.LoanAmount = 0;
+
+        if (isAdmin)
+        {
+            users = await UserRepository.GetAllUsers();
+
+            if (users.Any())
+            {
+                loanApplication.UserId = users.First().UserId;
+            }
+        }
+        else
+        {
+            loanApplication.UserId = currentUserId;
+        }
+    }
+
+    private async Task SaveLoanApplication()
+    {
+        if (!isAdmin)
+        {
+            loanApplication.UserId = currentUserId;
+        }
+
+        await LoanApplicationRepository.CreateLoanApplication(loanApplication);
+
+        NavigationManager.NavigateTo("/loanapplications");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/loanapplications");
+    }
+
+}

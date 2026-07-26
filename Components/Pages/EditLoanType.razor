@@ -1,0 +1,83 @@
+﻿@page "/loantypes/edit/{Id:int}"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject ILoanTypeRepository LoanTypeRepository
+@inject NavigationManager NavigationManager
+
+<h2>Edit Loan Type</h2>
+
+@if (loanType == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@loanType" OnValidSubmit="UpdateLoanType">
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Loan Type Name</label>
+
+            <InputText class="form-control"
+                       @bind-Value="loanType.LoanTypeName" />
+
+            <ValidationMessage For="@(() => loanType.LoanTypeName)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+
+            <InputText class="form-control"
+                       @bind-Value="loanType.Description" />
+
+            <ValidationMessage For="@(() => loanType.Description)" />
+        </div>
+
+        <button class="btn btn-success" type="submit">
+            Update
+        </button>
+
+        <button class="btn btn-secondary ms-2"
+                type="button"
+                @onclick="Cancel">
+            Cancel
+        </button>
+
+    </EditForm>
+}
+
+@code
+{
+    [Parameter]
+    public int Id { get; set; }
+
+    private LoanType? loanType;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loanType = await LoanTypeRepository.GetLoanTypeById(Id);
+    }
+
+    private async Task UpdateLoanType()
+    {
+        if (loanType != null)
+        {
+            await LoanTypeRepository.UpdateLoanType(loanType);
+        }
+
+        NavigationManager.NavigateTo("/loantypes");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/loantypes");
+    }
+}

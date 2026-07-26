@@ -1,0 +1,165 @@
+﻿@page "/loanapplications"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject ILoanApplicationRepository LoanApplicationRepository
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h2>Loan Applications</h2>
+
+    <button class="btn btn-primary"
+            @onclick='() => NavigationManager.NavigateTo("/loanapplications/create")'>
+        New Loan Application
+    </button>
+
+</div>
+
+@if (loanApplications == null)
+{
+    <div class="alert alert-info">
+        Loading...
+    </div>
+}
+else if (!loanApplications.Any())
+{
+    <div class="alert alert-warning">
+        No Loan Applications Found.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-bordered table-hover">
+
+        <thead class="table-dark">
+
+            <tr>
+
+                <th>Application ID</th>
+                <th>Customer</th>
+                <th>Application Date</th>
+                <th>Status</th>
+                <th>Loan Amount</th>
+                <th>Details</th>
+                <th>Delete</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            @foreach (var application in loanApplications)
+            {
+                <tr>
+
+                    <td>@application.LoanApplicationId</td>
+
+                    <td>@application.Name</td>
+
+                    <td>@application.ApplicationDate.ToShortDateString()</td>
+
+                    <td>@application.ApplicationStatus</td>
+
+                    <td>@application.LoanAmount.ToString("C")</td>
+
+                    <td>
+
+                        <button class="btn btn-primary btn-sm"
+                                @onclick='() => NavigationManager.NavigateTo($"/loanapplications/{application.LoanApplicationId}/details")'>
+                            View Details
+                        </button>
+
+                    </td>
+
+                    <td>
+
+                        <button class="btn btn-danger btn-sm"
+                                @onclick="() => DeleteLoanApplication(application.LoanApplicationId)">
+                            Delete
+                        </button>
+
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+}
+
+@code
+{
+    private List<LoanApplication>? loanApplications;
+
+    private bool isAdmin;
+
+    private int currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!(user.Identity?.IsAuthenticated ?? false))
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        isAdmin = user.IsInRole("Admin");
+
+        var idClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+
+        if (idClaim == null)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        currentUserId = int.Parse(idClaim.Value);
+
+        if (isAdmin)
+        {
+            loanApplications =
+                await LoanApplicationRepository.GetAllLoanApplications();
+        }
+        else
+        {
+            loanApplications =
+                await LoanApplicationRepository.GetLoanApplicationsByUserId(currentUserId);
+        }
+    }
+
+    private async Task DeleteLoanApplication(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            "Delete this Loan Application?");
+
+        if (!confirmed)
+            return;
+
+        await LoanApplicationRepository.DeleteLoanApplication(id);
+
+        if (isAdmin)
+        {
+            loanApplications =
+                await LoanApplicationRepository.GetAllLoanApplications();
+        }
+        else
+        {
+            loanApplications =
+                await LoanApplicationRepository.GetLoanApplicationsByUserId(currentUserId);
+        }
+    }
+}

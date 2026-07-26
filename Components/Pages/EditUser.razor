@@ -1,0 +1,95 @@
+﻿@page "/users/edit/{Id:int}"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Repositories
+@using Microsoft.AspNetCore.Components.Forms
+@using LoanManagementSystem.Interfaces
+
+@inject IUserRepository UserRepository
+@inject NavigationManager NavigationManager
+
+<h2>Edit User</h2>
+
+@if (user == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@user" OnValidSubmit="UpdateUser">
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label>Name</label>
+            <InputText class="form-control"
+                       @bind-Value="user.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label>Email</label>
+            <InputText class="form-control"
+                       @bind-Value="user.Email" />
+        </div>
+
+        <div class="mb-3">
+            <label>Password</label>
+            <InputText class="form-control"
+                       type="password"
+                       @bind-Value="user.PasswordHash" />
+        </div>
+
+        <div class="mb-3">
+            <label>Role</label>
+
+            <InputSelect class="form-select"  @bind-Value="user.Role">
+                <option value="Admin">Admin</option>
+                <option value="Customer">Customer</option>
+            </InputSelect>
+
+        </div>
+
+        <button class="btn btn-success" type="submit">
+            Update
+        </button>
+
+        <button class="btn btn-secondary ms-2"
+                type="button"
+                @onclick="Cancel">
+            Cancel
+        </button>
+
+    </EditForm>
+}
+
+@code
+{
+    [Parameter]
+    public int Id { get; set; }
+
+    private User? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserRepository.GetUserById(Id);
+    }
+
+    private async Task UpdateUser()
+    {
+        if (user is not null)
+        {
+            await UserRepository.UpdateUser(user);
+        }
+
+        NavigationManager.NavigateTo("/users");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/users");
+    }
+}

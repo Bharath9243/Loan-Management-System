@@ -1,0 +1,8 @@
+wwwroot\app.css
+Components\Layout\ReconnectModal.razor.js
+C:\Users\BHARATH KUMAR\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.9\build\..\_framework\blazor.web.js
+C:\Users\BHARATH KUMAR\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.9\build\..\_framework\blazor.server.js
+C:\Users\BHARATH KUMAR\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.9\_framework\blazor.server.js
+C:\Users\BHARATH KUMAR\.nuget\packages\microsoft.aspnetcore.app.internal.assets\10.0.9\_framework\blazor.web.js
+C:\Users\BHARATH KUMAR\source\repos\MiniECommerce\MiniECommerce\Components\Layout\ReconnectModal.razor.js
+C:\Users\BHARATH KUMAR\source\repos\MiniECommerce\MiniECommerce\wwwroot\app.css

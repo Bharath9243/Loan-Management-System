@@ -1,0 +1,140 @@
+﻿@page "/loanschemes/edit/{Id:int}"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject ILoanSchemeRepository LoanSchemeRepository
+@inject ILoanTypeRepository LoanTypeRepository
+@inject NavigationManager NavigationManager
+
+<h2 class="mb-4">Edit Loan Scheme</h2>
+
+@if (loanScheme == null)
+{
+    <div class="alert alert-info">
+        Loading...
+    </div>
+}
+else
+{
+    <EditForm Model="@loanScheme" OnValidSubmit="UpdateLoanScheme">
+
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label class="form-label">Scheme Name</label>
+
+            <InputText class="form-control"
+                       @bind-Value="loanScheme.SchemeName" />
+
+            <ValidationMessage For="@(() => loanScheme.SchemeName)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+
+            <InputText class="form-control"
+                       @bind-Value="loanScheme.Description" />
+
+            <ValidationMessage For="@(() => loanScheme.Description)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Processing Fee</label>
+
+            <InputNumber class="form-control"
+                         @bind-Value="loanScheme.ProcessingFee" />
+
+            <ValidationMessage For="@(() => loanScheme.ProcessingFee)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Interest Rate (%)</label>
+
+            <InputNumber class="form-control"
+                         @bind-Value="loanScheme.InterestRate" />
+
+            <ValidationMessage For="@(() => loanScheme.InterestRate)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Maximum Loan Amount</label>
+
+            <InputNumber class="form-control"
+                         @bind-Value="loanScheme.MaximumLoanAmount" />
+
+            <ValidationMessage For="@(() => loanScheme.MaximumLoanAmount)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Loan Type</label>
+
+            <InputSelect class="form-select"
+                         @bind-Value="loanScheme.LoanTypeId">
+
+                @if (loanTypes != null)
+                {
+                    @foreach (var loanType in loanTypes)
+                    {
+                        <option value="@loanType.LoanTypeId">
+                            @loanType.LoanTypeName
+                        </option>
+                    }
+                }
+
+            </InputSelect>
+
+            <ValidationMessage For="@(() => loanScheme.LoanTypeId)" />
+
+        </div>
+
+        <button type="submit"
+                class="btn btn-success">
+            Update Loan Scheme
+        </button>
+
+        <button type="button"
+                class="btn btn-secondary ms-2"
+                @onclick="Cancel">
+            Cancel
+        </button>
+
+    </EditForm>
+}
+
+@code
+{
+    [Parameter]
+    public int Id { get; set; }
+
+    private LoanScheme? loanScheme;
+
+    private List<LoanType>? loanTypes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loanTypes = await LoanTypeRepository.GetAllLoanTypes();
+
+        loanScheme = await LoanSchemeRepository.GetLoanSchemeById(Id);
+    }
+
+    private async Task UpdateLoanScheme()
+    {
+        if (loanScheme != null)
+        {
+            await LoanSchemeRepository.UpdateLoanScheme(loanScheme);
+        }
+
+        NavigationManager.NavigateTo("/loanschemes");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/loanschemes");
+    }
+}

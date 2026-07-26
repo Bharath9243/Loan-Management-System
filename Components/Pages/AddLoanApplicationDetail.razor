@@ -1,0 +1,120 @@
+﻿@page "/loanapplications/{LoanApplicationId:int}/details/create"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject ILoanSchemeRepository LoanSchemeRepository
+@inject ILoanApplicationDetailRepository LoanApplicationDetailRepository
+@inject NavigationManager NavigationManager
+
+<h2 class="mb-4">Add Loan Scheme</h2>
+
+<EditForm Model="@detail" OnValidSubmit="Save">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">
+            Loan Scheme
+        </label>
+
+        <InputSelect class="form-select"
+                     @bind-Value="detail.LoanSchemeId"
+                     @bind-Value:after="LoanSchemeChanged">
+
+            @foreach (var scheme in loanSchemes)
+            {
+                <option value="@scheme.LoanSchemeId">
+                    @scheme.SchemeName
+                </option>
+            }
+
+        </InputSelect>
+
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">
+            Loan Tenure (Months)
+        </label>
+
+        <InputNumber class="form-control"
+                     @bind-Value="detail.TenureMonths" />
+
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">
+            Interest Rate (%)
+        </label>
+
+        <InputNumber class="form-control"
+                     @bind-Value="detail.InterestRate"
+                     readonly />
+
+    </div>
+
+    <button class="btn btn-success"
+            type="submit">
+        Add to Application
+    </button>
+
+    <button class="btn btn-secondary ms-2"
+            type="button"
+            @onclick="Cancel">
+        Cancel
+    </button>
+
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int LoanApplicationId { get; set; }
+
+    private LoanApplicationDetail detail = new();
+
+    private List<LoanScheme> loanSchemes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        loanSchemes = await LoanSchemeRepository.GetAllLoanSchemes();
+
+        detail.LoanApplicationId = LoanApplicationId;
+        detail.TenureMonths = 12;
+
+        if (loanSchemes.Any())
+        {
+            detail.LoanSchemeId = loanSchemes.First().LoanSchemeId;
+            await LoanSchemeChanged();
+        }
+    }
+
+    private async Task LoanSchemeChanged()
+    {
+        var scheme = await LoanSchemeRepository.GetLoanSchemeById(detail.LoanSchemeId);
+
+        if (scheme != null)
+        {
+            detail.InterestRate = scheme.InterestRate;
+        }
+    }
+
+    private async Task Save()
+    {
+        await LoanApplicationDetailRepository.CreateLoanApplicationDetail(detail);
+
+        NavigationManager.NavigateTo($"/loanapplications/{LoanApplicationId}/details");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo($"/loanapplications/{LoanApplicationId}/details");
+    }
+
+}

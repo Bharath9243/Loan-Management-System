@@ -1,0 +1,90 @@
+﻿@page "/users/create"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Repositories
+@using Microsoft.AspNetCore.Components.Forms
+@using LoanManagementSystem.Interfaces
+
+@inject IUserRepository UserRepository
+@inject NavigationManager NavigationManager
+
+<h2 class="mb-4">Add User</h2>
+
+<EditForm Model="@user" OnValidSubmit="SaveUser">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+
+        <InputText class="form-control"
+                   @bind-Value="user.Name" />
+
+        <ValidationMessage For="@(() => user.Name)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+
+        <InputText class="form-control"
+                   @bind-Value="user.Email" />
+
+        <ValidationMessage For="@(() => user.Email)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+
+        <InputText class="form-control"
+                   type="password"
+                   @bind-Value="user.PasswordHash" />
+
+        <ValidationMessage For="@(() => user.PasswordHash)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Role</label>
+
+        <InputSelect class="form-select" @bind-Value="user.Role">
+            <option value="Admin">Admin</option>
+            <option value="Customer">Customer</option>
+        </InputSelect>
+
+        <ValidationMessage For="@(() => user.Role)" />
+    </div>
+
+    <button type="submit" class="btn btn-success">
+        Save User
+    </button>
+
+    <button type="button"
+            class="btn btn-secondary ms-2"
+            @onclick="Cancel">
+        Cancel
+    </button>
+
+</EditForm>
+
+@code
+{
+    private User user = new()
+    {
+        Role = "Customer"
+    };
+
+    private async Task SaveUser()
+    {
+        await UserRepository.CreateUser(user);
+
+        NavigationManager.NavigateTo("/users");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/users");
+    }
+}

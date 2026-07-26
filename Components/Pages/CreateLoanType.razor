@@ -1,0 +1,65 @@
+﻿@page "/loantypes/create"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject ILoanTypeRepository LoanTypeRepository
+@inject NavigationManager NavigationManager
+
+<h2 class="mb-4">Add Loan Type</h2>
+
+<EditForm Model="@loanType" OnValidSubmit="SaveLoanType">
+
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Loan Type Name</label>
+
+        <InputText class="form-control"
+                   @bind-Value="loanType.LoanTypeName" />
+
+        <ValidationMessage For="@(() => loanType.LoanTypeName)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+
+        <InputText class="form-control"
+                   @bind-Value="loanType.Description" />
+
+        <ValidationMessage For="@(() => loanType.Description)" />
+    </div>
+
+    <button type="submit" class="btn btn-success">
+        Save
+    </button>
+
+    <button type="button"
+            class="btn btn-secondary ms-2"
+            @onclick="Cancel">
+        Cancel
+    </button>
+
+</EditForm>
+
+@code
+{
+    private LoanType loanType = new();
+
+    private async Task SaveLoanType()
+    {
+        await LoanTypeRepository.CreateLoanType(loanType);
+
+        NavigationManager.NavigateTo("/loantypes");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/loantypes");
+    }
+}

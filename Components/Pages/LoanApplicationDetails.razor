@@ -1,0 +1,160 @@
+﻿@page "/loanapplications/{LoanApplicationId:int}/details"
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+
+@using LoanManagementSystem.Models
+@using LoanManagementSystem.Interfaces
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILoanApplicationRepository LoanApplicationRepository
+@inject ILoanApplicationDetailRepository LoanApplicationDetailRepository
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<h2 class="mb-4">Application Details</h2>
+
+<div class="d-flex justify-content-between mb-3">
+
+    <button class="btn btn-primary"
+            @onclick="AddItem">
+        Add Loan Scheme
+    </button>
+
+    <button class="btn btn-secondary"
+            @onclick="Back">
+        Back
+    </button>
+
+</div>
+
+@if (items == null)
+{
+    <div class="alert alert-info">
+        Loading...
+    </div>
+}
+else if (!items.Any())
+{
+    <div class="alert alert-warning">
+        No Loan Scheme Added Yet
+    </div>
+}
+else
+{
+    <table class="table table-striped table-bordered">
+
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Loan Scheme</th>
+                <th>Tenure (Months)</th>
+                <th>Interest Rate (%)</th>
+                <th>Estimated Interest</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @foreach (var item in items)
+            {
+                <tr>
+
+                    <td>@item.LoanApplicationDetailId</td>
+
+                    <td>@item.SchemeName</td>
+
+                    <td>@item.TenureMonths</td>
+
+                    <td>@item.InterestRate.ToString("N2") %</td>
+
+                    <td>@((item.TenureMonths * item.InterestRate).ToString("N2"))</td>
+
+                    <td>
+                        <button class="btn btn-danger btn-sm"
+                                @onclick="() => DeleteItem(item.LoanApplicationDetailId)">
+                            Delete
+                        </button>
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+}
+
+@code {
+
+    [Parameter]
+    public int LoanApplicationId { get; set; }
+
+    private List<LoanApplicationDetail>? items;
+
+    private bool isAdmin;
+
+    private int currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        var user = authState.User;
+
+        isAdmin = user.IsInRole("Admin");
+
+        currentUserId = int.Parse(
+            user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+
+        var application = await LoanApplicationRepository.GetLoanApplicationById(LoanApplicationId);
+
+        if (application == null)
+        {
+            NavigationManager.NavigateTo("/loanapplications");
+            return;
+        }
+
+        if (!isAdmin && application.UserId != currentUserId)
+        {
+            NavigationManager.NavigateTo("/access-denied");
+            return;
+        }
+
+        await LoadItems();
+    }
+
+    private async Task LoadItems()
+    {
+        items = await LoanApplicationDetailRepository
+            .GetLoanApplicationDetails(LoanApplicationId);
+    }
+
+    private void AddItem()
+    {
+        NavigationManager.NavigateTo($"/loanapplications/{LoanApplicationId}/details/create");
+    }
+
+    private void Back()
+    {
+        NavigationManager.NavigateTo("/loanapplications");
+    }
+
+    private async Task DeleteItem(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            "Delete this Loan Scheme from the Application?");
+
+        if (!confirmed)
+            return;
+
+        await LoanApplicationDetailRepository
+            .DeleteLoanApplicationDetail(id);
+
+        await LoadItems();
+    }
+
+}
