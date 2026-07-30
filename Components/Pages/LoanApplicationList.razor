@@ -49,6 +49,7 @@ else
                 <th>Status</th>
                 <th>Loan Amount</th>
                 <th>Details</th>
+                <th>Action</th>
                 <th>Delete</th>
 
             </tr>
@@ -82,10 +83,55 @@ else
 
                     <td>
 
-                        <button class="btn btn-danger btn-sm"
-                                @onclick="() => DeleteLoanApplication(application.LoanApplicationId)">
-                            Delete
-                        </button>
+                        @if (isAdmin)
+                        {
+                            @if (application.ApplicationStatus == "Pending")
+                            {
+                                <button class="btn btn-success btn-sm me-2"
+                                        @onclick='() => UpdateStatus(application.LoanApplicationId, "Approved")'>
+                                    Approve
+                                </button>
+
+                                <button class="btn btn-warning btn-sm"
+                                        @onclick='() => UpdateStatus(application.LoanApplicationId, "Rejected")'>
+                                    Reject
+                                </button>
+                            }
+                            else if (application.ApplicationStatus == "Approved")
+                            {
+                                <span class="badge bg-success">
+                                    Approved
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">
+                                    Rejected
+                                </span>
+                            }
+                        }
+                        else
+                        {
+                            <span>@application.ApplicationStatus</span>
+                        }
+
+                    </td>
+
+                    <td>
+
+                        @if (application.ApplicationStatus == "Pending")
+                        {
+                            <button class="btn btn-danger btn-sm"
+                                    @onclick="() => DeleteLoanApplication(application.LoanApplicationId)">
+                                Delete
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-secondary btn-sm" disabled>
+                                Delete
+                            </button>
+                        }
 
                     </td>
 
@@ -161,5 +207,20 @@ else
             loanApplications =
                 await LoanApplicationRepository.GetLoanApplicationsByUserId(currentUserId);
         }
+    }
+
+    private async Task UpdateStatus(int id, string status)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Are you sure you want to {status.ToLower()} this loan application?");
+
+        if (!confirmed)
+            return;
+
+        await LoanApplicationRepository.UpdateApplicationStatus(id, status);
+
+        loanApplications =
+            await LoanApplicationRepository.GetAllLoanApplications();
     }
 }

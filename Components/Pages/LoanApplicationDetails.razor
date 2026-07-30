@@ -17,10 +17,19 @@
 
 <div class="d-flex justify-content-between mb-3">
 
-    <button class="btn btn-primary"
-            @onclick="AddItem">
-        Add Loan Scheme
-    </button>
+    @if (!hasLoanScheme)
+    {
+        <button class="btn btn-primary"
+                @onclick="AddItem">
+            Add Loan Scheme
+        </button>
+    }
+    else
+    {
+        <button class="btn btn-secondary" disabled>
+            Loan Scheme Already Added
+        </button>
+    }
 
     <button class="btn btn-secondary"
             @onclick="Back">
@@ -96,6 +105,8 @@ else
 
     private bool isAdmin;
 
+    private bool hasLoanScheme;
+
     private int currentUserId;
 
     protected override async Task OnInitializedAsync()
@@ -130,6 +141,8 @@ else
     {
         items = await LoanApplicationDetailRepository
             .GetLoanApplicationDetails(LoanApplicationId);
+
+        hasLoanScheme = items.Any();
     }
 
     private void AddItem()

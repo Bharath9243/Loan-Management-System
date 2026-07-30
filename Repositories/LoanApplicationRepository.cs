@@ -127,5 +127,20 @@ namespace LoanManagementSystem.Repositories
 
             await _db.ExecuteAsync(sql, new { Id = id });
         }
+
+        public async Task UpdateApplicationStatus(int loanApplicationId, string status)
+        {
+            string sql = @"
+        UPDATE LoanApplications
+        SET ApplicationStatus = @Status
+        WHERE LoanApplicationId = @LoanApplicationId";
+
+            await _db.ExecuteAsync(sql,
+                new
+                {
+                    LoanApplicationId = loanApplicationId,
+                    Status = status
+                });
+        }
     }
 }
